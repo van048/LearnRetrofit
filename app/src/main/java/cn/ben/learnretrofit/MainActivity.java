@@ -40,5 +40,41 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, t.getMessage());
             }
         });
+
+        query();
+    }
+
+    private static final String BASE_URL = "http://apis.baidu.com";
+    private static final String API_KEY = "2e6f8b920859a476254f77b1b9c225d6";
+
+    private void query() {
+        //1.创建Retrofit对象
+        Retrofit retrofit = new Retrofit.Builder()
+                .addConverterFactory(GsonConverterFactory.create())//解析方法
+                .baseUrl(BASE_URL)//主机地址
+                .build();
+
+        //2.创建访问API的请求
+        IPService service = retrofit.create(IPService.class);
+        Call<IPResult> call = service.getResult(API_KEY, "115.239.210.27");
+
+        //3.发送请求
+        call.enqueue(new Callback<IPResult>() {
+            @Override
+            public void onResponse(Call<IPResult> call, Response<IPResult> response) {
+                //4.处理结果
+                if (response.isSuccessful()) {
+                    IPResult result = response.body();
+                    if (result != null) {
+                        Log.d(TAG, "handle: " + result);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<IPResult> call, Throwable t) {
+                Log.d(TAG, "error: " + t.getMessage());
+            }
+        });
     }
 }
