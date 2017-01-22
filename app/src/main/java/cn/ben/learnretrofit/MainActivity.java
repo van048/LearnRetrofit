@@ -8,7 +8,11 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,6 +46,39 @@ public class MainActivity extends AppCompatActivity {
         });
 
         query();
+
+        retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+
+        Log.d(TAG, "main thread: " + Thread.currentThread().getId());
+        IPService ipService = retrofit.create(IPService.class);
+        ipService.getIPResult(API_KEY, "115.239.210.27")
+                .subscribeOn(Schedulers.newThread()) // 子线程访问网络
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<IPResult>() {
+
+                    @Override
+                    public void onNext(IPResult ipResult) {
+                        if (ipResult != null) {
+                            Log.d(TAG, "handle: " + ipResult);
+                            Log.d(TAG, "thread: " + Thread.currentThread().getId());
+                        }
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+                });
     }
 
     private static final String BASE_URL = "http://apis.baidu.com";
